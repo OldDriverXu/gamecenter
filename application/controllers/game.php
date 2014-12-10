@@ -91,8 +91,13 @@
                     'login_ip' => $login_ip,
                     'login_ua' => $login_ua,
                     'from_username' => $from_username);
-                $this->game_model->set_gamelog($array);
-                $data = "提交成功";
+                if ($score_type == 'use'){
+                    $this->game_model->set_gamelog($array);
+                    $data = "提交成功";
+                }else{
+                    $data = "活动截止";
+
+                }
                 $this->response(array('status'=> 'success', 'content' => $data));
             }else{
                 $data = "请关注公共账号后重新激活";
@@ -114,12 +119,16 @@
                 $game_id = $this->get('game_id');
             }
 
+            $follower = $this->follower_model->get_follower($username);
+            $nickname = $follower['follower_nickname'];
+            $tel = $follower['follower_tel'];
+
             $highscore = $this->game_model->get_highscore($username, $game_id, 'good');
             $totalscore = $this->game_model->get_totalscore($username, $game_id, 'total');
             $usecount = $this->game_model->get_usecount($username, $game_id);
             $activecount = $this->game_model->get_activecount($username, $game_id);
             $awarduse = $this->game_model->get_award_status($username, $game_id);
-            $this->response(array('highscore'=> $highscore, 'totalscore' => $totalscore, 'usecount' => $usecount, 'activecount' => $activecount, 'awarduse' => $awarduse), 200);
+            $this->response(array('nickname'=>$nickname, 'tel'=>$tel, 'highscore'=> $highscore, 'totalscore' => $totalscore, 'usecount' => $usecount, 'activecount' => $activecount, 'awarduse' => $awarduse), 200);
         }
 
         public function rank_get(){
@@ -129,19 +138,20 @@
 
             for ($i=0; $i<count($rank); $i++){
                 $result[$i]['rank'] = $i+1;
+                $result[$i]['uid'] = $rank[$i]['username'];
                 $follower = $this->follower_model->get_follower(($rank[$i]['username']));
                 if ($follower['follower_nickname']){
                     $result[$i]['name'] = $follower['follower_nickname'];
                 }else{
                     $result[$i]['name'] = '匿名';
                 }
-                
+
                 if ($follower['follower_tel']){
                     $result[$i]['tel'] = substr($follower['follower_tel'],0,3)."****".substr($follower['follower_tel'],7,4);
                 }else{
                     $result[$i]['tel'] = '***********';
                 }
-                
+
                 $result[$i]['score'] = $rank[$i]['score'];
             }
 
@@ -162,7 +172,7 @@
                 $count = $count + 5;
                 $last_log = $this->game_model->get_validlastlog($user, $count);
                 if ($last_log){
-                    $this->game_model->delete_log($user, $last_log['login_date']);
+                    $this->game_model->delete_log($user, $last_log['login_date'], 'use');
                 }
             }
             $this->response(array('status' => 'success', 'cotent'=>'clear log success'), 200);

@@ -152,9 +152,10 @@
             }
         }
 
-        public function delete_log($username, $login_date){
+        public function delete_log($username, $login_date, $except){
             $this->db->where('username', $username);
             $this->db->where('login_date >', $login_date);
+            $this->db->where('score_type <>', $except);
             $this->db->delete('game_log');
             return true;
         }
