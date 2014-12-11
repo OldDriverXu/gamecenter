@@ -75,7 +75,7 @@
             $game_id = '1';
             $score_type = $this->post('type');
             $score_value = $this->post('score');
-            $from_username = $this->post('from_uid');
+            $from_username = $this->post('fid');
             $login_date = getCurrentTime();
             $login_ip = getIp();
             $login_ua = $this->agent->agent_string();

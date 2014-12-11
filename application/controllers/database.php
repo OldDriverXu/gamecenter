@@ -131,22 +131,22 @@
             $this->dbforge->add_key('id', TRUE);
             $this->dbforge->create_table('wx_followers', TRUE);
 
-            //wx_openid
+            //wx_follower_relationship
             $fields41 = array(
                 'id' => array(
                     'type' => 'INT',
                     'constraint' => '8',
                     'auto_increment' => TRUE),
-                'openid' => array(
+                'source_username' => array(
                     'type'=> 'VARCHAR',
                     'constraint' => '32'),
-                'unionid' => array(
+                'end_username' => array(
                     'type'=> 'VARCHAR',
                     'constraint' => '32')
                 );
             $this->dbforge->add_field($fields41);
             $this->dbforge->add_key('id', TRUE);
-            $this->dbforge->create_table('wx_unionid', TRUE);
+            $this->dbforge->create_table('wx_follower_relationship', TRUE);
 
             //wx_options
             $fields5 = array(
@@ -235,7 +235,69 @@
             $this->dbforge->add_key('id', TRUE);
             $this->dbforge->create_table('game_log', TRUE);
 
-            //game
+            //game_high_score
+            $fields_high_score = array(
+                'id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8',
+                    'auto_increment' => TRUE),
+                'username' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '32'),
+                'game_id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8'),
+                'high_score' => array(
+                    'type' => 'INT',
+                    'constraint' => '8')
+                );
+            $this->dbforge->add_field($fields_high_score);
+            $this->dbforge->add_key('id', TRUE);
+            $this->dbforge->create_table('game_high_score', TRUE);
+
+            //game_invite_score
+            $fields_invate_score = array(
+                'id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8',
+                    'auto_increment' => TRUE),
+                'username' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '32'),
+                'game_id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8'),
+                'invite_score' => array(
+                    'type' => 'INT',
+                    'constraint' => '8')
+                );
+            $this->dbforge->add_field($fields_invate_score);
+            $this->dbforge->add_key('id', TRUE);
+            $this->dbforge->create_table('game_invite_score', TRUE);
+
+            // game_award_received
+            $fields_award_received = array(
+                'id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8',
+                    'auto_increment' => TRUE),
+                'username' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '32'),
+                'game_id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8'),
+                'award' => array(
+                    'type' => 'TEXT'),
+                'status' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '10')
+                );
+            $this->dbforge->add_field($fields_award_received);
+            $this->dbforge->add_key('id', TRUE);
+            $this->dbforge->create_table('game_award_received', TRUE);
+
+            //game_info
             $fields8 = array(
                 'id' => array(
                     'type' => 'INT',
@@ -265,7 +327,7 @@
                 );
             $this->dbforge->add_field($fields8);
             $this->dbforge->add_key('id', TRUE);
-            $this->dbforge->create_table('game', TRUE);
+            $this->dbforge->create_table('game_info', TRUE);
         }
     }
 ?>

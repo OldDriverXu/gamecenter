@@ -28,43 +28,74 @@
             $this->db->insert('game_log', $data);
         }
 
-        public function get_highscore($username, $game_id, $score_type){
-            $this->db->select('score_value');
-            $this->db->from('game_log');
-            $this->db->where('username', $username);
-            $this->db->where('game_id', $game_id);
-            $this->db->where('score_type', $score_type);
-            $this->db->order_by('score_value', 'desc');
-            $this->db->limit(1);
-            $query = $this->db->get();
-            $result = $query->result_array();
-
-            if ($result){
-                return (int)$result[0]['score_value'];
+        // $array = array(
+        //     'username' => $username,
+        //     'game_id' => $game_id,
+        //     'high_score' => $high_score
+        //     );
+        public function update_highscore($username, $game_id, $score){
+            $select_sql = "SELECT username FROM game_high_score WHERE username =".$username." AND game_id=".$game_id;
+            $select_query = $this->db->query($select_sql);
+            if ($select_query->num_rows()>0){
+                // update records
+                $update_sql = "UPDATE game_high_score SET high_score =".$score." WHERE username =".$username." AND game_id=".$game_id;
+                $update_query = $this->db->query($update_sql);
             }else{
-                return null;
+                // insert recores
+                $insert_sql = "INSERT INTO game_high_score (username, game_id, high_score) values (".$username.",".$game_id.",".$score.")";
+                $insert_query = $this->db->query($insert_sql);
             }
         }
 
-        public function get_totalscore($username, $game_id, $score_type){
-            $this->db->select('score_value');
-            $this->db->from('game_log');
+        public function update_invitescore($username, $game_id, $score){
+            $select_sql = "SELECT username FROM game_invite_score WHERE username =".$username." AND game_id=".$game_id;
+            $select_query = $this->db->query($select_sql);
+            if ($select_query->num_rows()>0){
+                // update records
+                $update_sql = "UPDATE game_invite_score SET invite_score =".$score." WHERE username =".$username." AND game_id=".$game_id;
+                $update_query = $this->db->query($update_sql);
+            }else{
+                // insert recores
+                $insert_sql = "INSERT INTO game_invite_score (username, game_id, invite_score) values (".$username.",".$game_id.",".$score.")";
+                $insert_query = $this->db->query($insert_sql);
+            }
+        }
+
+        public function get_highscore($username, $game_id){
+            $this->db->select('high_score');
+            $this->db->from('game_high_score');
             $this->db->where('username', $username);
             $this->db->where('game_id', $game_id);
-            $this->db->where('score_type', $score_type);
             $query = $this->db->get();
             $result = $query->result_array();
 
-            $totalscore = 0;
+            if ($result){
+                return (int)$result[0]['high_score'];
+            }else{
+                return 0;
+            }
+        }
+
+        public function get_invitescore($username, $game_id){
+            $this->db->select('invite_score');
+            $this->db->from('game_invite_score');
+            $this->db->where('username', $username);
+            $this->db->where('game_id', $game_id);
+            $query = $this->db->get();
+            $result = $query->result_array();
 
             if ($result){
-                for ($i=0; $i<count($result); $i++) {
-                    $totalscore += (int)$result[$i]['score_value'];
-                }
-                return $totalscore;
+                return (int)$result[0]['invite_score'];
             }else{
-                return null;
+                return 0;
             }
+        }
+
+        public function get_totalscore($username, $game_id){
+            $highscore = $this->get_highscore($username, $game_id);
+            $invitescore = $this->get_invitescore($username, $game_id);
+            $totalscore = $high_score + $invitescore;
+            return $totalscore;
         }
 
         public function get_activecount($username, $game_id){
@@ -141,7 +172,7 @@
         public function get_validlastlog($username, $count){
             $this->db->from('game_log');
             $this->db->where('username', $username);
-            $this->db->where('score_type', 'total'); 
+            $this->db->where('score_type', 'total');
             $this->db->limit($count);
             $query = $this->db->get();
             $result = $query->result_array();
