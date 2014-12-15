@@ -11,6 +11,7 @@
 			$this->load->model('autoreply/news_reply');
 			$this->load->model('message/text_message');
 			$this->load->model('follower/follower_model');
+			$this->load->model('game/game_model');
 			$this->load->library('parser');
 			$this->load->helper(array('form', 'url'));
 		}
@@ -27,7 +28,7 @@
 	        curl_setopt($curl_handle, CURLOPT_URL, 'http://127.0.0.1/weikefu/index.php/api/message/pic');
 	        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
 	        curl_setopt($curl_handle, CURLOPT_POST, 1);
-	        curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $data); 	       
+	        curl_setopt($curl_handle, CURLOPT_POSTFIELDS, $data);
 
 	        $buffer = curl_exec($curl_handle);
         	curl_close($curl_handle);
@@ -111,6 +112,13 @@
 		}
 
 
+		function score(){
+			$game_id = '2';
+			$rank = $this->game_model->get_rank($game_id);
+			print_r($rank);
+		}
+
+
 
 
 
@@ -137,14 +145,14 @@
 			$this->load->model('advanced/advanced_news_reply');
 			$result=$this->advanced_news_reply->get_news(5);
 			//var_dump($result);
-			
+
 
 			$data = array(
 					'touser'  => '12313',
 					'msgtype' => 'news',
 					'news'    => array(
 							'articles' => $result
-						)	
+						)
 				);
 
 			//var_dump($data);
@@ -220,7 +228,7 @@
 			function uploadMedia(){
 		        $file = realpath('D:/2.jpg'); //要上传的文件
 
-		      
+
 
 		        $access_token="Ulcy7xXUpEz7p_I69SK3DsPhuUtF6wMqZMtYePK2U5r3dU03aWkNCHb5Bsq9oblBpjFNvHTdKH6MUaOCCkYHgyd0h-3Jzmt1YBeXkDVr4-rzDs5SrsKdkjrFhM_pGSpwB7kE_-PbJwYK1x18GZOlVg";
 		        $type="image";
@@ -238,14 +246,14 @@
 		         return curl_error($ch);
 		        }
 		        curl_close($ch);
-		        return $result;		    	
+		        return $result;
 			}
 
 			// $result1= uploadMedia();
 			// var_dump($result1);
-		
 
-			
+
+
 
 			$this->load->model('advanced/advanced_media');
 

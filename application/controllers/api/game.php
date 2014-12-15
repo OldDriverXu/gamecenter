@@ -15,23 +15,45 @@
             $this->response(array('status'=> 'success', 'content' => 'hello world'));
         }
 
-        public function login_get(){
-            $username = $this->get('uid');
+        public function login_post(){
+            // 服务号openid
+            $unionid = $this->post('unionid');
+            // 订阅号openid
+            $username = $this->post('uid');
+            $nickname = $this->post('nickname');
+            $headimgurl = $this->post('headimgurl');
 
             if (!$username){
-                $this->response(array('status'=> 'fail', 'content' => 'no uid'));
+                $data = "no openid";
+                $this->response(array('status'=> 'failed', 'content' => $data));
+                return;
             }
 
             $follower = $this->follower_model->get_follower($username);
             if ($follower){
-                if ($follower['follower_nickname']||$follower['follower_tel']){
-                    $this->response(array('status'=> 'success', 'content' => '1'));
-                }else{
-                    $this->response(array('status'=> 'fail', 'content' => 'no user infos'));
-                }
+                $array = array(
+                    'follower_unionid' => $unionid,
+                    'follower_username' => $username,
+                    'follower_nickname' => $nickname,
+                    'follower_headimgurl' => $headimgurl);
+                $this->follower_model->update_follower($array);
+                $data = "更新成功";
+                $this->response(array('status'=> 'success', 'content' => $data));
+                return;
             }else{
-                $data = "请关注公共账号后重新激活";
-                $this->response(array('status'=> 'failed', 'content' => $data));
+                $subscribe_date = getCurrentTime();
+                $subscribe_timestamp = getTime();
+                $array = array(
+                    'follower_unionid' => $unionid,
+                    'follower_username' => $username,
+                    'follower_subscribe_date' => $subscribe_date,
+                    'follower_subscribe_timestamp' => $subscribe_timestamp,
+                    'follower_nickname' => $nickname,
+                    'follower_headimgurl' => $headimgurl);
+                $this->follower_model->set_follower($array);
+                $data = "激活成功";
+                $this->response(array('status'=> 'success', 'content' => $data));
+                return;
             }
         }
 
@@ -72,36 +94,52 @@
 
         public function log_post(){
             $username = $this->post('uid');
-            $game_id = '1';
-            $score_type = $this->post('type');
-            $score_value = $this->post('score');
+            $game_id = '2';
+            $score_type = 'log';
+            $score_value = (int)$this->post('score');
             $from_username = $this->post('fid');
+            $game_time = $this->post('gametime');
+
             $login_date = getCurrentTime();
             $login_ip = getIp();
             $login_ua = $this->agent->agent_string();
 
-            $follower = $this->follower_model->get_follower($username);
-            if ($follower){
+            // 验证是否是粉丝
+            // $follower = $this->follower_model->get_follower($username);
+            // if ($follower){
+
+            if ($username){
+                //游戏日志表
                 $array = array(
                     'username' => $username,
                     'game_id' => $game_id,
                     'score_type' => $score_type,
                     'score_value' => $score_value,
+                    'game_time' => $game_time,
                     'login_date' => $login_date,
                     'login_ip' => $login_ip,
                     'login_ua' => $login_ua,
                     'from_username' => $from_username);
-                if ($score_type == 'use'){
-                    $this->game_model->set_gamelog($array);
-                    $data = "提交成功";
-                }else{
-                    $data = "活动截止";
 
+                $this->game_model->set_gamelog($array);
+
+                //邀请表
+                // 自己邀请的人数
+                if($username){
+                    $invitecount = $this->game_model->get_invitecount($username, $game_id);
+                    $this->game_model->update_invitescore($username, $game_id, $invitecount);
                 }
+                // Invitor的邀请人数
+                if($from_username){
+                    $invitecount = $this->game_model->get_invitecount($from_username, $game_id);
+                    $this->game_model->update_invitescore($from_username, $game_id, $invitecount);
+                }
+
+                //最高分表
+                $this->game_model->update_highscore($username, $game_id, $score_value);
+
+                $data = "提交成功";
                 $this->response(array('status'=> 'success', 'content' => $data));
-            }else{
-                $data = "请关注公共账号后重新激活";
-                $this->response(array('status'=> 'failed', 'content' => $data));
             }
         }
 
@@ -114,7 +152,7 @@
             }
 
             if (!$this->get('game_id')){
-                $game_id = '1';
+                $game_id = '2';
             }else{
                 $game_id = $this->get('game_id');
             }
@@ -122,24 +160,31 @@
             $follower = $this->follower_model->get_follower($username);
             $nickname = $follower['follower_nickname'];
             $tel = $follower['follower_tel'];
+            $ranking = 0;
 
-            $highscore = $this->game_model->get_highscore($username, $game_id, 'good');
-            $totalscore = $this->game_model->get_totalscore($username, $game_id, 'total');
-            $usecount = $this->game_model->get_usecount($username, $game_id);
-            $activecount = $this->game_model->get_activecount($username, $game_id);
-            $awarduse = $this->game_model->get_award_status($username, $game_id);
-            $this->response(array('nickname'=>$nickname, 'tel'=>$tel, 'highscore'=> $highscore, 'totalscore' => $totalscore, 'usecount' => $usecount, 'activecount' => $activecount, 'awarduse' => $awarduse), 200);
+            $rank = $this->game_model->get_rank($game_id);
+            for ($i=0; $i<count($rank); $i++){
+                if ($rank[$i]['username'] == $username){
+                    $ranking = $i+1;
+                    break;
+                }
+            }
+
+            $highscore = $this->game_model->get_highscore($username, $game_id);
+            $invitescore = $this->game_model->get_invitescore($username, $game_id);
+            $totalscore = $this->game_model->get_totalscore($username, $game_id);
+            $this->response(array('nickname'=>$nickname, 'tel'=>$tel, 'ranking'=>$ranking, 'highscore'=> $highscore, 'invitescore' => $invitescore, 'totalscore' => $totalscore), 200);
         }
 
         public function rank_get(){
-            $game_id = 1;
-            $limit = 50;
+            $game_id = 2;
+            $limit = 100;
             $rank = $this->game_model->get_rank($game_id, $limit);
 
             for ($i=0; $i<count($rank); $i++){
                 $result[$i]['rank'] = $i+1;
                 $result[$i]['uid'] = $rank[$i]['username'];
-                $follower = $this->follower_model->get_follower(($rank[$i]['username']));
+                $follower = $this->follower_model->get_follower($rank[$i]['username']);
                 if ($follower['follower_nickname']){
                     $result[$i]['name'] = $follower['follower_nickname'];
                 }else{
@@ -151,7 +196,8 @@
                 }else{
                     $result[$i]['tel'] = '***********';
                 }
-
+                $result[$i]['high_score'] = $rank[$i]['high_score'];
+                $result[$i]['invite_score'] = $rank[$i]['invite_score'];
                 $result[$i]['score'] = $rank[$i]['score'];
             }
 

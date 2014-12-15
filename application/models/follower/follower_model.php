@@ -21,7 +21,21 @@
 			}
 		}
 
+		public function get_follower_uid_by_unionid($unionid){
+			$this->db->select('follower_username');
+			$this->db->from('wx_followers');
+			$this->db->where('follower_unionid', $unionid);
+			$query = $this->db->get();
+			$result = $query->result_array();
+			if($result){
+				return $result[0]['follower_username'];
+			}else{
+				return NULL;
+			}
+		}
+
 		/* $array = array(
+		|		'follower_unionid'             => $follower_unionid,
 		|		'follower_username'            => $follower_username,
 		|		'follower_subscribe_date'      => date('Y-m-d H:i:s', $follower_subscribe_timestamp),
 		|		'follower_subscribe_timestamp' => $follower_subscribe_timestamp,
@@ -46,6 +60,7 @@
 		}
 
 		/* $array = array(
+		|		'follower_unionid'             => $follower_unionid,
 		|		'follower_username'            => $follower_username,
 		|		'follower_subscribe_date'      => date('Y-m-d H:i:s', $follower_subscribe_timestamp),
 		|		'follower_subscribe_timestamp' => $follower_subscribe_timestamp,
@@ -96,7 +111,7 @@
 				if($merge){
 					$data = array_merge($data, $merge);
 				}
-				$next_openid = $temp['next_openid']; 
+				$next_openid = $temp['next_openid'];
 			}
 			return $data;
 		}
@@ -106,14 +121,14 @@
 			$curl_string = "?access_token=".$access_token."&openid=".$username."&lang=zh_CN";
 			$curl_url    = $get_url.$curl_string;
 
-			$curl_result = doCurlGetRequest($curl_url);	
+			$curl_result = doCurlGetRequest($curl_url);
 			$data =  objectToArray(json_decode($curl_result));
 			$result = array(
-					'follower_username' => $data['openid'],
+					'follower_unionid' => $data['openid'],
 					'follower_subscribe' => $data['subscribe'],
 					'follower_subscribe_timestamp' => $data['subscribe_time'],
 					'follower_nickname' => $data['nickname'],
-					'follower_headimgurl' => $data['headimgurl'], 
+					'follower_headimgurl' => $data['headimgurl'],
 					'follower_sex'      => $data['sex'],
 					'follower_city'     => $data['city'],
 					'follower_province' => $data['province'],
@@ -125,7 +140,7 @@
 		/**
 		* @param $count 查询的记录数(limit)
 		* @param $shift 查询的偏移(offset)
-		*/ 
+		*/
 		public function get_followers($count, $shift=0){
 			$query = $this->db->get('wx_followers', $count, $shift);
 			$result = $query->result_array();

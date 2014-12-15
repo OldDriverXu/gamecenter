@@ -26,11 +26,13 @@
                 }
             }else{
                 //恶意请求：获取来来源ip，并写日志
-                exit(0);
+                // exit ( 0 );
+                $this->_response();
             }
         }
 
         private function _response(){
+            $startTime = microtime(true);
             function exitErrorInput(){
                 echo 'error input!';
                 interface_log(INFO, EC_OK, "***** interface request end *****");
