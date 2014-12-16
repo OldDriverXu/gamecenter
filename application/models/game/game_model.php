@@ -1,4 +1,5 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+    require_once APPPATH.'libraries/common/GlobalFunctions.php';
 
     class Game_model extends CI_Model
     {
@@ -34,37 +35,36 @@
         //     'game_id' => $game_id,
         //     'high_score' => $high_score
         //     );
-        public function update_highscore($username, $game_id, $score){
+        public function update_highscore($username, $game_id, $score, $create_time){
             $select_sql = "SELECT username, high_score FROM game_high_score WHERE username ='".$username."' AND game_id=".$game_id;
             $select_query = $this->db->query($select_sql);
             if ($select_query->num_rows()>0){
-                $create_time = getCurrentTime();
                 $result = $select_query->result_array();
                 // update records
                 if ($result[0]['high_score'] < $score){
-                    $update_sql = "UPDATE game_high_score SET high_score =".$score.", create_time = ".$create_time." WHERE username ='".$username."' AND game_id=".$game_id;
+                    $update_sql = "UPDATE game_high_score SET high_score =".$score.", create_time = '".$create_time."' WHERE username ='".$username."' AND game_id=".$game_id;
                     $update_query = $this->db->query($update_sql);
                 }
             }else{
                 // insert recores
-                $insert_sql = "INSERT INTO game_high_score (username, game_id, high_score, create_time) VALUES ('".$username."',".$game_id.",".$score.",".$create_time.")";
+                $insert_sql = "INSERT INTO game_high_score (username, game_id, high_score, create_time) VALUES ('".$username."',".$game_id.",".$score.",'".$create_time."')";
                 $insert_query = $this->db->query($insert_sql);
             }
         }
 
-        public function update_invitescore($username, $game_id, $score){
+        public function update_invitescore($username, $game_id, $score, $create_time){
             $select_sql = "SELECT username, invite_score FROM game_invite_score WHERE username ='".$username."' AND game_id=".$game_id;
             $select_query = $this->db->query($select_sql);
             if ($select_query->num_rows()>0){
                 $result = $select_query->result_array();
                 // update records
                 if ($result[0]['invite_score'] < $score){
-                    $update_sql = "UPDATE game_invite_score SET invite_score =".$score.", create_time = ".$create_time." WHERE username ='".$username."' AND game_id=".$game_id;
+                    $update_sql = "UPDATE game_invite_score SET invite_score =".$score.", create_time = '".$create_time."' WHERE username ='".$username."' AND game_id=".$game_id;
                     $update_query = $this->db->query($update_sql);
                 }
             }else{
                 // insert recores
-                $insert_sql = "INSERT INTO game_invite_score (username, game_id, invite_score) VALUES ('".$username."',".$game_id.",".$score.",".$create_time.")";
+                $insert_sql = "INSERT INTO game_invite_score (username, game_id, invite_score, create_time) VALUES ('".$username."',".$game_id.",".$score.",'".$create_time."')";
                 $insert_query = $this->db->query($insert_sql);
             }
         }
@@ -143,33 +143,32 @@
             return $result;
         }
 
-        public function get_awards($game_id){
-            $this->db->select_max('score_value', 'award');
-            $this->db->from('game_log');
-            $this->db->where('game_id', $game_id);
-            $this->db->where('score_type', 'good');
-            $this->db->group_by('username');
-            $query = $this->db->get();
-            $result = $query->result_array();
-            $tmp = array();
-            for ($i=0; $i< count($result); $i++){
-                array_push($tmp, (string)$result[$i]['award']);
+        public function update_award_status($username, $game_id, $award, $status){
+            $select_sql = "SELECT username, award, status FROM game_award_delivered WHERE username ='".$username."' AND game_id=".$game_id;
+            $select_query = $this->db->query($select_sql);
+            if ($select_query->num_rows()>0){
+                $result = $select_query->result_array();
+                // update 
+                $update_sql = "UPDATE game_award_delivered SET award ='".$award."', status = '".$status."' WHERE username ='".$username."' AND game_id=".$game_id;
+                $update_query = $this->db->query($update_sql);
+            }else{
+                // insert
+                $insert_sql = "INSERT INTO game_award_delivered (username, game_id, award, status) VALUES ('".$username."',".$game_id.",'".$award."','".$status."')";
+                $insert_query = $this->db->query($insert_sql);
             }
-            $ac=array_count_values($tmp);
-            return $ac;
         }
 
         public function get_award_status($username, $game_id){
-            $this->db->from('game_log');
+            $this->db->select('status');
+            $this->db->from('game_award_delivered');
             $this->db->where('username', $username);
             $this->db->where('game_id', $game_id);
-            $this->db->where('score_type', 'use');
             $query = $this->db->get();
             $result = $query->result_array();
             if ($result){
-                return true;
+                return $result[0]['status'];
             }else{
-                return false;
+                return null;
             }
         }
 

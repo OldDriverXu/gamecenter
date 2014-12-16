@@ -127,16 +127,16 @@
                 // 自己邀请的人数
                 if($username){
                     $invitecount = $this->game_model->get_invitecount($username, $game_id);
-                    $this->game_model->update_invitescore($username, $game_id, $invitecount);
+                    $this->game_model->update_invitescore($username, $game_id, $invitecount, $login_date);
                 }
                 // Invitor的邀请人数
                 if($from_username){
                     $invitecount = $this->game_model->get_invitecount($from_username, $game_id);
-                    $this->game_model->update_invitescore($from_username, $game_id, $invitecount);
+                    $this->game_model->update_invitescore($from_username, $game_id, $invitecount, $login_date);
                 }
 
                 //最高分表
-                $this->game_model->update_highscore($username, $game_id, $score_value);
+                $this->game_model->update_highscore($username, $game_id, $score_value, $login_date);
 
                 $data = "提交成功";
                 $this->response(array('status'=> 'success', 'content' => $data));
@@ -161,6 +161,7 @@
             $nickname = $follower['follower_nickname'];
             $tel = $follower['follower_tel'];
             $ranking = 0;
+            $status = '';
 
             $rank = $this->game_model->get_rank($game_id);
             for ($i=0; $i<count($rank); $i++){
@@ -172,8 +173,75 @@
 
             $highscore = $this->game_model->get_highscore($username, $game_id);
             $invitescore = $this->game_model->get_invitescore($username, $game_id);
-            $totalscore = $this->game_model->get_totalscore($username, $game_id);
-            $this->response(array('nickname'=>$nickname, 'tel'=>$tel, 'ranking'=>$ranking, 'highscore'=> $highscore, 'invitescore' => $invitescore, 'totalscore' => $totalscore), 200);
+            $totalscore = $highscore + $invitescore;
+
+            if ($ranking == 1){
+                $award = "1000元代金券";
+            }else if($ranking >= 2 && $ranking <=20){
+                $award = "杰克丹尼一瓶";
+            }else if($ranking >=21 && $ranking <=50){
+                $award = "皇冠伏特加";
+            }else if($ranking >=51 && $ranking <=100){
+                $award = "3L大扎一个";
+            }else{
+                $award = "谢谢参与";
+            }
+
+            $awardstatus = $this->game_model->get_award_status($username, $game_id);
+
+
+            // 没有记录，插入一条奖品状态记录，初始状态为未使用
+            if (!$awardstatus){
+                $status = 'unused';
+                $this->game_model->update_award_status($username, $game_id, $award, $status);
+            }else{
+            // 有记录
+                if($awardstatus == 'used'){
+                    $status = 'used';
+                }else if($awardstatus == 'unused'){
+                    $status = 'unused';
+                    // update award
+                    $this->game_model->update_award_status($username, $game_id, $award, $status);
+                }else{
+                    $status = 'unknown';
+                }
+            }
+
+            $this->response(
+                array(
+                    'nickname'=>$nickname,
+                    'tel'=>$tel,
+                    'ranking'=>$ranking,
+                    'highscore'=> $highscore,
+                    'invitescore' => $invitescore,
+                    'totalscore' => $totalscore,
+                    'award' => $award,
+                    'awardstatus' => $status),
+                200
+            );
+        }
+
+        public function awardstatus_post(){
+            if (!$this->post('uid')){
+                $this->response(NULL, 400);
+                return;
+            }else{
+                $username = $this->post('uid');
+            }
+
+            if (!$this->post('game_id')){
+                $game_id = '2';
+            }else{
+                $game_id = $this->post('game_id');
+            }
+
+            $award = $this->post('award');
+            $status = $this->post('status');
+
+            $this->game_model->update_award_status($username, $game_id, $award, $status);
+
+            $data = "提交成功";
+            $this->response(array('status'=> 'success', 'content' => $data));
         }
 
         public function rank_get(){
