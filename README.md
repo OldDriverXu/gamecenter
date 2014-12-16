@@ -17,10 +17,9 @@ This is a project using CodeIgniter to generate Wechat Gamecenter API Server.
     - /gamecenter/application/config/weixin_config.php
     <pre><code>
     $config['token'] = 'yourtoken';  // 微信公共平台连接token
-
-    $config['grant_type'] = 'client_credential'; //grant_type是获取access_token填写client_credential
-    $config['appid'] = 'appid';  // appid	 是第三方用户唯一凭证
-    $config['secret'] = '即appsecret'; // secret	 是第三方用户唯一凭证密钥，即appsecret
+    $config['grant_type'] = 'client_credential'; // grant_type 是获取access_token填写client_credential
+    $config['appid'] = 'appid';  // appid 是第三方用户唯一凭证
+    $config['secret'] = '即appsecret'; // secret 是第三方用户唯一凭证密钥，即appsecret
     </code></pre>
 3. Create database.
     - Create database if 'gamecenter' is not exist.
