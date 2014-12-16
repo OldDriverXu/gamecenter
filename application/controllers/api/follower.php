@@ -15,6 +15,9 @@
 
         public function isfollower_get(){
             $unionid = $this->get('unionid');
+            if (!$unionid){
+                $this->response(array('isfollower'=> false, 'uid'=> ''));
+            }
             $isfollower = $this->follower_model->get_follower_uid_by_unionid($unionid);
             if($isfollower){
                 $this->response(array('isfollower'=> true, 'uid'=> $isfollower));
