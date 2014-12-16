@@ -1,15 +1,14 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-$config['token'] = 'helens98';
+$config['token'] = 'yourtoken';
 $config['access_token_url'] = 'https://api.weixin.qq.com/cgi-bin/token';
 
 // grant_type	 是获取access_token填写client_credential
 // appid	 是第三方用户唯一凭证
 // secret	 是第三方用户唯一凭证密钥，即appsecret
 $config['grant_type'] = 'client_credential';
-$config['appid'] = 'wx66fa0f943a853d23';
-$config['secret'] = '040c6ba01a90302297e2a8529e444d6f';
-
+$config['appid'] = 'appid';
+$config['secret'] = 'appsecret';
 
 // oauth
 $config['oauth_grant_type'] = 'authorization_code';
