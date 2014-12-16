@@ -33,8 +33,9 @@
         // $array = array(
         //     'username' => $username,
         //     'game_id' => $game_id,
-        //     'high_score' => $high_score
-        //     );
+        //     'high_score' => $high_score,
+        //     'create_time' => $create_time
+        // );
         public function update_highscore($username, $game_id, $score, $create_time){
             $select_sql = "SELECT username, high_score FROM game_high_score WHERE username ='".$username."' AND game_id=".$game_id;
             $select_query = $this->db->query($select_sql);
@@ -84,6 +85,8 @@
             }
         }
 
+        // 获取邀请积分
+        // 注意：邀请积分是从game_invite_score表里面查出来的
         public function get_invitescore($username, $game_id){
             $this->db->select('invite_score');
             $this->db->from('game_invite_score');
@@ -106,6 +109,8 @@
             return $totalscore;
         }
 
+        // 获取邀请人数
+        // 注意：邀请人数是从game_log表中计算得出的
         public function get_invitecount($username, $game_id){
             $this->db->distinct();
             $this->db->select('username');
@@ -120,18 +125,9 @@
             }else{
                 return 0;
             }
-
         }
 
-        public function get_usecount($username, $game_id){
-            $this->db->from('game_log');
-            $this->db->where('username', $username);
-            $this->db->where('game_id', $game_id);
-            $this->db->where('score_type', 'total');
-            $count = $this->db->count_all_results();
-            return $count;
-        }
-
+        // 获取总排名
         public function get_rank($game_id, $limit=0){
             if ($limit){
                 $sql = "SELECT h.username, h.high_score, i.invite_score, (h.high_score+i.invite_score) AS score FROM game_high_score AS h join game_invite_score AS i ON h.username = i.username WHERE h.game_id = ".$game_id." and i.game_id = ".$game_id. " ORDER BY score DESC, h.create_time LIMIT ".$limit;
@@ -143,63 +139,5 @@
             return $result;
         }
 
-        public function update_award_status($username, $game_id, $award, $status){
-            $select_sql = "SELECT username, award, status FROM game_award_delivered WHERE username ='".$username."' AND game_id=".$game_id;
-            $select_query = $this->db->query($select_sql);
-            if ($select_query->num_rows()>0){
-                $result = $select_query->result_array();
-                // update 
-                $update_sql = "UPDATE game_award_delivered SET award ='".$award."', status = '".$status."' WHERE username ='".$username."' AND game_id=".$game_id;
-                $update_query = $this->db->query($update_sql);
-            }else{
-                // insert
-                $insert_sql = "INSERT INTO game_award_delivered (username, game_id, award, status) VALUES ('".$username."',".$game_id.",'".$award."','".$status."')";
-                $insert_query = $this->db->query($insert_sql);
-            }
-        }
-
-        public function get_award_status($username, $game_id){
-            $this->db->select('status');
-            $this->db->from('game_award_delivered');
-            $this->db->where('username', $username);
-            $this->db->where('game_id', $game_id);
-            $query = $this->db->get();
-            $result = $query->result_array();
-            if ($result){
-                return $result[0]['status'];
-            }else{
-                return null;
-            }
-        }
-
-        public function get_allusers(){
-            $this->db->distinct();
-            $this->db->select('username');
-            $this->db->from('game_log');
-            $query = $this->db->get();
-            $result = $query->result_array();
-            return $result;
-        }
-
-        public function get_validlastlog($username, $count){
-            $this->db->from('game_log');
-            $this->db->where('username', $username);
-            $this->db->where('score_type', 'total');
-            $this->db->limit($count);
-            $query = $this->db->get();
-            $result = $query->result_array();
-            if ($result){
-                return $result[count($result)-1];
-            }else{
-                return null;
-            }
-        }
-
-        public function delete_log($username, $login_date, $except){
-            $this->db->where('username', $username);
-            $this->db->where('login_date >', $login_date);
-            $this->db->where('score_type <>', $except);
-            $this->db->delete('game_log');
-            return true;
-        }
     }
+?>

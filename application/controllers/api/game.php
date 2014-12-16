@@ -9,6 +9,7 @@
             $this->load->library('user_agent');
             $this->load->model('follower/follower_model');
             $this->load->model('game/game_model');
+            $this->load->model('game/gameaward_model');
         }
 
         public function index_get(){
@@ -109,7 +110,7 @@
             // if ($follower){
 
             if ($username){
-                //游戏日志表
+                // 游戏日志表
                 $array = array(
                     'username' => $username,
                     'game_id' => $game_id,
@@ -120,10 +121,12 @@
                     'login_ip' => $login_ip,
                     'login_ua' => $login_ua,
                     'from_username' => $from_username);
-
                 $this->game_model->set_gamelog($array);
 
-                //邀请表
+                // 游戏积分表
+                $this->game_model->update_highscore($username, $game_id, $score_value, $login_date);
+
+                // 邀请积分表
                 // 自己邀请的人数
                 if($username){
                     $invitecount = $this->game_model->get_invitecount($username, $game_id);
@@ -135,9 +138,6 @@
                     $this->game_model->update_invitescore($from_username, $game_id, $invitecount, $login_date);
                 }
 
-                //最高分表
-                $this->game_model->update_highscore($username, $game_id, $score_value, $login_date);
-
                 $data = "提交成功";
                 $this->response(array('status'=> 'success', 'content' => $data));
             }
@@ -146,7 +146,6 @@
         public function score_get(){
             if (!$this->get('uid')){
                 $this->response(NULL, 400);
-                return;
             }else{
                 $username = $this->get('uid');
             }
@@ -187,23 +186,26 @@
                 $award = "谢谢参与";
             }
 
-            $awardstatus = $this->game_model->get_award_status($username, $game_id);
-
+            $award_delivered = $this->gameaward_model->get_award_status($username, $game_id);
 
             // 没有记录，插入一条奖品状态记录，初始状态为未使用
-            if (!$awardstatus){
+            if (!$award_delivered){
                 $status = 'unused';
-                $this->game_model->update_award_status($username, $game_id, $award, $status);
+                $this->gameaward_model->set_award_status($username, $game_id, $award, $status);
             }else{
             // 有记录
-                if($awardstatus == 'used'){
-                    $status = 'used';
-                }else if($awardstatus == 'unused'){
-                    $status = 'unused';
-                    // update award
-                    $this->game_model->update_award_status($username, $game_id, $award, $status);
-                }else{
-                    $status = 'unknown';
+                switch ($award_delivered['status']) {
+                    case 'used':
+                        $status = 'used';
+                        break;
+                    case 'unused':
+                        $status = 'unused';
+                        // update award
+                        $this->gameaward_model->update_award_status($username, $game_id, $award, $status);
+                        break;
+                    default:
+                        $status = 'unknown';
+                        break;
                 }
             }
 
