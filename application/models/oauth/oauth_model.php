@@ -23,7 +23,7 @@
 
             $output_array = json_decode($curl_result,true);
             if(!$output_array || $output_array['errcode']){
-                interface_log(ERROR, EC_OTHER, 'request wx to get token error');
+                interface_log(ERROR, EC_OTHER, 'request wx to get token error:'.var_export($output_array, true));
                 return false;
             }
             return $output_array;
