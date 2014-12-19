@@ -127,15 +127,20 @@
                 $this->game_model->update_highscore($username, $game_id, $score_value, $login_date);
 
                 // 邀请积分表
-                // 自己邀请的人数
                 if($username){
+                    // 自己邀请的人数
                     $invitecount = $this->game_model->get_invitecount($username, $game_id);
-                    $this->game_model->update_invitescore($username, $game_id, $invitecount, $login_date);
+                    // 邀请积分
+                    $invitescore = $invitecount * 10;
+                    $this->game_model->update_invitescore($username, $game_id, $invitescore, $login_date);
                 }
-                // Invitor的邀请人数
+
                 if($from_username){
+                    // Invitor的邀请人数
                     $invitecount = $this->game_model->get_invitecount($from_username, $game_id);
-                    $this->game_model->update_invitescore($from_username, $game_id, $invitecount, $login_date);
+                    // 邀请积分
+                    $invitescore = $invitecount * 10;
+                    $this->game_model->update_invitescore($from_username, $game_id, $invitescore, $login_date);
                 }
 
                 $data = "提交成功";
