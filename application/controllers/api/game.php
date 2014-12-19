@@ -105,9 +105,23 @@
             $login_ip = getIp();
             $login_ua = $this->agent->agent_string();
 
+            // 是否超过兑奖时间
+            $expired_string = '2014-12-25 00:00:00';
+            $expired_time = strtotime($expired_string);
+            $expired_date =  date('Y-m-d H:i:s', $expired_time);
+            if($login_date>$expired_date){
+               $this->response(array('status'=> 'fail', 'content' => '超过活动截止日期'));
+            }
+
             // 验证是否是粉丝
             // $follower = $this->follower_model->get_follower($username);
             // if ($follower){
+
+            // 是否是黑名单粉丝
+            $blacklist = $this->game_model->get_blacklist();
+            if (in_array($username, $blacklist)){
+                $this->response(array('status'=> 'fail', 'content' => '违规用户'));
+            }
 
             if ($username){
                 // 游戏日志表
@@ -277,6 +291,11 @@
             }
 
             $this->response($result, 200);
+        }
+
+        public function blacklist_get(){
+            $blacklist = $this->game_model->get_blacklist();
+            $this->response($blacklist, 200);
         }
 
         public function awards_get(){

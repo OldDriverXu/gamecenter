@@ -400,6 +400,28 @@
             echo "Create Table game_info \n";
             echo "<br/>";
 
+            //game_blacklist
+            $fields_blacklist = array(
+                'id' => array(
+                    'type' => 'INT',
+                    'constraint' => '8',
+                    'auto_increment' => TRUE),
+                'username' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '32'),
+                'unionid' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '32'),
+                'status' => array(
+                    'type' => 'VARCHAR',
+                    'constraint' => '10')
+                );
+            $this->dbforge->add_field($fields_blacklist);
+            $this->dbforge->add_key('id', TRUE);
+            $this->dbforge->create_table('game_blacklist', TRUE);
+            echo "Create Table game_blacklist \n";
+            echo "<br/>";
+
             echo "Success";
         }
     }
