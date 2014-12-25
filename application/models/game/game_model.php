@@ -139,5 +139,23 @@
             return $result;
         }
 
+
+        // 游戏黑名单
+        public function get_blacklist(){
+            $this->db->select('username');
+            $this->db->from('game_blacklist');
+            $query = $this->db->get();
+            $result = $query->result_array();
+            $return = array();
+            if ($result){
+                for ($i=0; $i<count($result); $i++){
+                    array_push($return, $result[$i]['username']);
+                }
+            }else{
+
+            }
+            return $return;
+        }
+
     }
 ?>

@@ -105,9 +105,27 @@
             $login_ip = getIp();
             $login_ua = $this->agent->agent_string();
 
+            // 是否超过兑奖时间
+            $expired_string = '2014-12-25 00:00:00';
+            $expired_time = strtotime($expired_string);
+            $expired_date =  date('Y-m-d H:i:s', $expired_time);
+            if($login_date>$expired_date){
+               $this->response(array('status'=> 'fail', 'content' => '超过活动截止日期'));
+            }
+
             // 验证是否是粉丝
             // $follower = $this->follower_model->get_follower($username);
             // if ($follower){
+
+            // 是否是黑名单粉丝
+            $blacklist = $this->game_model->get_blacklist();
+            if (in_array($username, $blacklist)){
+                $this->response(array('status'=> 'fail', 'content' => '违规用户'));
+            }
+            // 分数是否异常
+            if ($score_value > 500){
+                $this->response(array('status'=> 'fail', 'content' => '游戏积分异常'));
+            }
 
             if ($username){
                 // 游戏日志表
@@ -127,15 +145,20 @@
                 $this->game_model->update_highscore($username, $game_id, $score_value, $login_date);
 
                 // 邀请积分表
-                // 自己邀请的人数
                 if($username){
+                    // 自己邀请的人数
                     $invitecount = $this->game_model->get_invitecount($username, $game_id);
-                    $this->game_model->update_invitescore($username, $game_id, $invitecount, $login_date);
+                    // 邀请积分
+                    $invitescore = $invitecount * 10;
+                    $this->game_model->update_invitescore($username, $game_id, $invitescore, $login_date);
                 }
-                // Invitor的邀请人数
+
                 if($from_username){
+                    // Invitor的邀请人数
                     $invitecount = $this->game_model->get_invitecount($from_username, $game_id);
-                    $this->game_model->update_invitescore($from_username, $game_id, $invitecount, $login_date);
+                    // 邀请积分
+                    $invitescore = $invitecount * 10;
+                    $this->game_model->update_invitescore($from_username, $game_id, $invitescore, $login_date);
                 }
 
                 $data = "提交成功";
@@ -183,7 +206,7 @@
             }else if($ranking >=51 && $ranking <=100){
                 $award = "3L大扎一个";
             }else{
-                $award = "谢谢参与";
+                $award = "免费畅饮1小时";
             }
 
             $award_delivered = $this->gameaward_model->get_award_status($username, $game_id);
@@ -240,7 +263,7 @@
             $award = $this->post('award');
             $status = $this->post('status');
 
-            $this->game_model->update_award_status($username, $game_id, $award, $status);
+            $this->gameaward_model->update_award_status($username, $game_id, $award, $status);
 
             $data = "提交成功";
             $this->response(array('status'=> 'success', 'content' => $data));
@@ -272,6 +295,11 @@
             }
 
             $this->response($result, 200);
+        }
+
+        public function blacklist_get(){
+            $blacklist = $this->game_model->get_blacklist();
+            $this->response($blacklist, 200);
         }
 
         public function awards_get(){
