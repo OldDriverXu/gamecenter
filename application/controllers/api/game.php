@@ -95,18 +95,19 @@
 
         public function log_post(){
             $username = $this->post('uid');
-            $game_id = '2';
+            $game_id = '3';
             $score_type = 'log';
-            $score_value = (int)$this->post('score');
+            $score_value = 0;
+
             $from_username = $this->post('fid');
-            $game_time = $this->post('gametime');
+            // $game_time = $this->post('gametime');
 
             $login_date = getCurrentTime();
             $login_ip = getIp();
             $login_ua = $this->agent->agent_string();
 
             // 是否超过兑奖时间
-            $expired_string = '2014-12-25 00:00:00';
+            $expired_string = '2015-1-1 08:00:00';
             $expired_time = strtotime($expired_string);
             $expired_date =  date('Y-m-d H:i:s', $expired_time);
             if($login_date>$expired_date){
@@ -123,9 +124,9 @@
                 $this->response(array('status'=> 'fail', 'content' => '违规用户'));
             }
             // 分数是否异常
-            if ($score_value > 500){
-                $this->response(array('status'=> 'fail', 'content' => '游戏积分异常'));
-            }
+            // if ($score_value > 500){
+            //     $this->response(array('status'=> 'fail', 'content' => '游戏积分异常'));
+            // }
 
             if ($username){
                 // 游戏日志表
@@ -133,8 +134,6 @@
                     'username' => $username,
                     'game_id' => $game_id,
                     'score_type' => $score_type,
-                    'score_value' => $score_value,
-                    'game_time' => $game_time,
                     'login_date' => $login_date,
                     'login_ip' => $login_ip,
                     'login_ua' => $login_ua,
@@ -149,7 +148,7 @@
                     // 自己邀请的人数
                     $invitecount = $this->game_model->get_invitecount($username, $game_id);
                     // 邀请积分
-                    $invitescore = $invitecount * 10;
+                    $invitescore = $invitecount * 1;
                     $this->game_model->update_invitescore($username, $game_id, $invitescore, $login_date);
                 }
 
@@ -157,7 +156,7 @@
                     // Invitor的邀请人数
                     $invitecount = $this->game_model->get_invitecount($from_username, $game_id);
                     // 邀请积分
-                    $invitescore = $invitecount * 10;
+                    $invitescore = $invitecount * 1;
                     $this->game_model->update_invitescore($from_username, $game_id, $invitescore, $login_date);
                 }
 
@@ -199,14 +198,18 @@
 
             if ($ranking == 1){
                 $award = "1000元代金券";
-            }else if($ranking >= 2 && $ranking <=20){
-                $award = "杰克丹尼一瓶";
-            }else if($ranking >=21 && $ranking <=50){
-                $award = "皇冠伏特加";
-            }else if($ranking >=51 && $ranking <=100){
-                $award = "3L大扎一个";
+            }else if($totalscore>=90){
+                $award = "杰克丹尼1瓶";
+            }else if($totalscore>=60 && $totalscore <90){
+                $award = "8L大扎或伏特加1瓶";
+            }else if($totalscore >=30 && $totalscore <60){
+                $award = "3L大扎一个或水烟1壶";
+            }else if($totalscore >=10 && $totalscore <30){
+                $award = "菜单上任意鸡尾酒1杯";
+            }else if($totalscore >=5 && $totalscore <10){
+                $award = "青岛1瓶";
             }else{
-                $award = "免费畅饮1小时";
+                $award = "谢谢参与";
             }
 
             $award_delivered = $this->gameaward_model->get_award_status($username, $game_id);
@@ -232,18 +235,27 @@
                 }
             }
 
-            $this->response(
-                array(
-                    'nickname'=>$nickname,
-                    'tel'=>$tel,
-                    'ranking'=>$ranking,
-                    'highscore'=> $highscore,
-                    'invitescore' => $invitescore,
-                    'totalscore' => $totalscore,
-                    'award' => $award,
-                    'awardstatus' => $status),
-                200
-            );
+            // 元旦才开奖
+            $login_date = getCurrentTime();
+            $expired_string = '2015-1-1 00:00:00';
+            $expired_time = strtotime($expired_string);
+            $expired_date =  date('Y-m-d H:i:s', $expired_time);
+            if($login_date>$expired_date){
+                $this->response(
+                    array(
+                        'nickname'=>$nickname,
+                        'tel'=>$tel,
+                        'ranking'=>$ranking,
+                        'highscore'=> $highscore,
+                        'invitescore' => $invitescore,
+                        'totalscore' => $totalscore,
+                        'award' => $award,
+                        'awardstatus' => $status),
+                    200
+                );
+            }else{
+               $this->response(NULL, 200);
+            }
         }
 
         public function awardstatus_post(){
@@ -270,7 +282,12 @@
         }
 
         public function rank_get(){
-            $game_id = 2;
+            if(!$this->get('game_id')){
+                $game_id = 2;
+            }else{
+                $game_id = $this->get('game_id');
+            }
+
             $limit = 100;
             $rank = $this->game_model->get_rank($game_id, $limit);
 
@@ -302,24 +319,84 @@
             $this->response($blacklist, 200);
         }
 
-        public function awards_get(){
-            $game_id = 1;
-            $awards = $this->game_model->get_awards($game_id);
-            $this->response($awards, 200);
+        public function makewish_post(){
+            $username = $this->post('uid');
+            $game_id = '3';
+            $game_string = $this->post('wish');
+            $score_type = 'text';
+
+            $login_date = getCurrentTime();
+            $login_ip = getIp();
+            $login_ua = $this->agent->agent_string();
+
+            // 是否超过兑奖时间
+            $expired_string = '2015-01-02 00:00:00';
+            $expired_time = strtotime($expired_string);
+            $expired_date =  date('Y-m-d H:i:s', $expired_time);
+            if($login_date>$expired_date){
+               $this->response(array('status'=> 'fail', 'content' => '超过活动截止日期'));
+            }
+
+            if ($username){
+                // 游戏日志表
+                $array = array(
+                    'username' => $username,
+                    'game_id' => $game_id,
+                    'score_type' => $score_type,
+                    'game_string' => $game_string,
+                    'login_date' => $login_date,
+                    'login_ip' => $login_ip,
+                    'login_ua' => $login_ua);
+                $this->game_model->set_gamelog($array);
+
+                // 邀请积分表
+                if($username){
+                    // 自己邀请的人数
+                    $invitecount = $this->game_model->get_invitecount($username, $game_id);
+                    // 邀请积分
+                    $invitescore = $invitecount * 1;
+                    $this->game_model->update_invitescore($username, $game_id, $invitescore, $login_date);
+                }
+
+                if($from_username){
+                    // Invitor的邀请人数
+                    $invitecount = $this->game_model->get_invitecount($from_username, $game_id);
+                    // 邀请积分
+                    $invitescore = $invitecount * 1;
+                    $this->game_model->update_invitescore($from_username, $game_id, $invitescore, $login_date);
+                }
+
+                $data = "提交成功";
+                $this->response(array('status'=> 'success', 'content' => $data));
+
+            }
         }
 
-        public function clear_get(){
-            $users = $this->game_model->get_allusers();
-            foreach ($users as $key=>$value) {
-                $user = $value['username'];
-                $count = $this->game_model->get_activecount($user, '1');
-                $count = $count + 5;
-                $last_log = $this->game_model->get_validlastlog($user, $count);
-                if ($last_log){
-                    $this->game_model->delete_log($user, $last_log['login_date'], 'use');
+        public function wish_get(){
+            $username = $this->get('uid');
+            $game_id = '3';
+            $score_type = 'text';
+
+            if ($username){
+                $wish = $this->game_model->get_wish($username, $game_id);
+                if ($wish){
+                    $inviteusers = $this->game_model->get_inviteusers($username, $game_id);
+                    if($inviteusers){
+                        for ($i=0; $i<count($inviteusers); $i++){
+                            $invite[$i]['uid'] = $inviteusers[$i];
+                            $follower = $this->follower_model->get_follower($invite[$i]['uid']);
+                            $invite[$i]['name'] = $follower['follower_nickname'];
+                            $invite[$i]['headimg'] = $follower['follower_headimgurl'];
+                        }
+                    }
+                    $this->response(array('status'=> 'success', 'wish' => $wish, 'invite' => $invite));
+                }else{
+                    $this->response(array('status'=> 'fail', 'content' => 'no wish'));
                 }
+            }else{
+                $this->response(array('status'=> 'fail', 'content' => 'no username'));
             }
-            $this->response(array('status' => 'success', 'cotent'=>'clear log success'), 200);
         }
+
     }
 ?>

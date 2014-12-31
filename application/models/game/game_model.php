@@ -127,6 +127,41 @@
             }
         }
 
+        public function get_inviteusers($username, $game_id){
+            $this->db->distinct();
+            $this->db->select('username');
+            $this->db->from('game_log');
+            $this->db->where('from_username', $username);
+            $this->db->where('game_id', $game_id);
+            $query = $this->db->get();
+            $result = $query->result_array();
+            $return = array();
+            if ($result){
+                for ($i=0; $i<count($result); $i++){
+                    array_push($return, $result[$i]['username']);
+                }
+                return $return;
+            }else{
+                return NULL;
+            }
+        }
+
+        public function get_wish($username, $game_id){
+            $this->db->select('game_string');
+            $this->db->from('game_log');
+            $this->db->where('username', $username);
+            $this->db->where('game_id', $game_id);
+            $this->db->where('score_type', 'text');
+            $query = $this->db->get();
+            $result = $query->result_array();
+            if ($result){
+                return $result[0]['game_string'];
+            }else{
+                return NULL;
+            }
+
+        }
+
         // 获取总排名
         public function get_rank($game_id, $limit=0){
             if ($limit){

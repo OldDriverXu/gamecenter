@@ -25,5 +25,19 @@
                 $this->response(array('isfollower'=> false, 'uid'=> ''));
             }
         }
+
+        public function followerinfo_get(){
+            $username = $this->get('uid');
+            if($username){
+                $userinfo = $this->follower_model->get_follower($username);
+                if ($userinfo){
+                    $this->response($userinfo, 200);
+                }else{
+                    $this->response(null, 200);
+                }
+            }else{
+                $this->response(null, 200);
+            }
+        }
     }
 ?>
